@@ -1,4 +1,4 @@
-package oauth2xorm_test
+package oauth2xorm
 
 import (
 	"testing"

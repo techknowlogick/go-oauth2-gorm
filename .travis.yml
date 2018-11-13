@@ -6,9 +6,9 @@ go:
   - "1.10.x"
   - "1.11.x"
 services:
-  - mysql
+  #- mysql
 before_install:
-  - mysql -e 'CREATE DATABASE myapp_test;'
+  #- mysql -e 'CREATE DATABASE myapp_test;'
   - go get -t -v ./...
 
 script:
