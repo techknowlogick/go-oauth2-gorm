@@ -150,13 +150,13 @@ func (s *Store) RemoveByCode(code string) error {
 
 // RemoveByAccess use the access token to delete the token information
 func (s *Store) RemoveByAccess(access string) error {
-	_, err := s.db.Where("access = ?", access).Update(&StoreItem{Access:""})
+	_, err := s.db.Where("access = ?", access).Cols("access").Update(&StoreItem{Access:""})
 	return err
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
 func (s *Store) RemoveByRefresh(refresh string) error {
-	_, err := s.db.Where("refresh = ?", refresh).Update(&StoreItem{Refresh:""})
+	_, err := s.db.Where("refresh = ?", refresh).Cols("refresh").Update(&StoreItem{Refresh:""})
 	return err
 }
 
