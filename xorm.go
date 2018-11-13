@@ -10,6 +10,9 @@ import (
   "github.com/go-xorm/xorm"
   "gopkg.in/oauth2.v3"
   "gopkg.in/oauth2.v3/models"
+  _ "github.com/mattn/go-sqlite3"
+  _ "github.com/go-sql-driver/mysql"
+  _ "github.com/lib/pq"
 )
 
 var noUpdateContent = "No content found to be updated"
@@ -48,6 +51,10 @@ func NewStore(config *Config, gcInterval int) *Store {
 	if err != nil {
 		panic(err)
 	}
+	return NewStoreWithDB(config, x, gcInterval)
+}
+
+func NewStoreWithDB(config *Config, db *xorm.Engine, gcInterval int) *Store {
 	store := &Store{
 		db:        x,
 		tableName: "oauth2_token",
