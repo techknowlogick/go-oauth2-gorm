@@ -119,10 +119,10 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 	fmt.Println("TRY TO CREATE TOKEN BY STORING IT IN DB")
 	jv, err := json.Marshal(info)
 	if err != nil {
-		return
+		return err
 	}
 	item := &StoreItem{
-		Data: jv,
+		Data: string(jv),
 	}
 
 	if code := info.GetCode(); code != "" {
@@ -138,7 +138,7 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 		}
 	}
 
-	_, err :=  s.db.Insert(&item)
+	_, err =  s.db.Insert(&item)
 	return err
 }
 
@@ -162,9 +162,9 @@ func (s *Store) RemoveByRefresh(refresh string) error {
 
 func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 	var tm models.Token
-	err = json.Unmarshal(data, &tm)
+	err := json.Unmarshal(data, &tm)
 	if err != nil {
-		return
+		return nil
 	}
 	return &tm
 }
