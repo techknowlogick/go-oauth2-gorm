@@ -159,21 +159,14 @@ func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 	return &tm
 }
 
-// TODO: update below to xorm
-
 // GetByCode use the authorization code for token information data
 func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 	if code == "" {
 		return nil, nil
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE code=? LIMIT 1", s.tableName)
-	var item StoreItem
-	err := s.db.SelectOne(&item, query, code)
+	item, err := s.db.Where("code = ?", code).Get(&StoreItem{})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -185,13 +178,8 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 		return nil, nil
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE access=? LIMIT 1", s.tableName)
-	var item StoreItem
-	err := s.db.SelectOne(&item, query, access)
+	item, err := s.db.Where("access = ?", access).Get(&StoreItem{})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -203,13 +191,8 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 		return nil, nil
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE refresh=? LIMIT 1", s.tableName)
-	var item StoreItem
-	err := s.db.SelectOne(&item, query, refresh)
+	item, err := s.db.Where("refresh = ?", refresh).Get(&StoreItem{})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
