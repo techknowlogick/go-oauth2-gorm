@@ -143,20 +143,20 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 
 // RemoveByCode delete the authorization code
 func (s *Store) RemoveByCode(code string) error {
-	_, err := s.db.Where("code = ?", code).Update(&StoreItem{}, &StoreItem{Code:""})
+	_, err := s.db.Where("code = ?", code).Cols("code").Update(&StoreItem{Code:""})
 
 	return err
 }
 
 // RemoveByAccess use the access token to delete the token information
 func (s *Store) RemoveByAccess(access string) error {
-	_, err := s.db.Where("access = ?", access).Update(&StoreItem{}, &StoreItem{Access:""})
+	_, err := s.db.Where("access = ?", access).Update(&StoreItem{Access:""})
 	return err
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
 func (s *Store) RemoveByRefresh(refresh string) error {
-	_, err := s.db.Where("refresh = ?", refresh).Update(&StoreItem{}, &StoreItem{Refresh:""})
+	_, err := s.db.Where("refresh = ?", refresh).Update(&StoreItem{Refresh:""})
 	return err
 }
 
