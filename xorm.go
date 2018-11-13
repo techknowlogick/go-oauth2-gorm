@@ -74,6 +74,17 @@ type Store struct {
 	ticker    *time.Ticker
 }
 
+// SetStdout set error output
+func (s *Store) SetStdout(stdout io.Writer) *Store {
+	s.stdout = stdout
+	return s
+}
+
+// Close close the store
+func (s *Store) Close() {
+	s.ticker.Stop()
+}
+
 func (s *Store) errorf(format string, args ...interface{}) {
 	if s.stdout != nil {
 		buf := fmt.Sprintf(format, args...)
@@ -95,4 +106,119 @@ func (s *Store) gc() {
 			}
 		}
 	}
+}
+
+// TODO: update below to xorm
+
+// Create create and store the new token information
+func (s *Store) Create(info oauth2.TokenInfo) error {
+	buf, _ := jsoniter.Marshal(info)
+	item := &StoreItem{
+		Data: string(buf),
+	}
+
+	if code := info.GetCode(); code != "" {
+		item.Code = code
+		item.ExpiredAt = info.GetCodeCreateAt().Add(info.GetCodeExpiresIn()).Unix()
+	} else {
+		item.Access = info.GetAccess()
+		item.ExpiredAt = info.GetAccessCreateAt().Add(info.GetAccessExpiresIn()).Unix()
+
+		if refresh := info.GetRefresh(); refresh != "" {
+			item.Refresh = info.GetRefresh()
+			item.ExpiredAt = info.GetRefreshCreateAt().Add(info.GetRefreshExpiresIn()).Unix()
+		}
+	}
+
+	return s.db.Insert(item)
+}
+
+// RemoveByCode delete the authorization code
+func (s *Store) RemoveByCode(code string) error {
+	query := fmt.Sprintf("UPDATE %s SET code='' WHERE code=? LIMIT 1", s.tableName)
+	_, err := s.db.Exec(query, code)
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	}
+	return err
+}
+
+// RemoveByAccess use the access token to delete the token information
+func (s *Store) RemoveByAccess(access string) error {
+	query := fmt.Sprintf("UPDATE %s SET access='' WHERE access=? LIMIT 1", s.tableName)
+	_, err := s.db.Exec(query, access)
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	}
+	return err
+}
+
+// RemoveByRefresh use the refresh token to delete the token information
+func (s *Store) RemoveByRefresh(refresh string) error {
+	query := fmt.Sprintf("UPDATE %s SET refresh='' WHERE refresh=? LIMIT 1", s.tableName)
+	_, err := s.db.Exec(query, refresh)
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	}
+	return err
+}
+
+func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
+	var tm models.Token
+	jsoniter.Unmarshal([]byte(data), &tm)
+	return &tm
+}
+
+// GetByCode use the authorization code for token information data
+func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
+	if code == "" {
+		return nil, nil
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE code=? LIMIT 1", s.tableName)
+	var item StoreItem
+	err := s.db.SelectOne(&item, query, code)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return s.toTokenInfo(item.Data), nil
+}
+
+// GetByAccess use the access token for token information data
+func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
+	if access == "" {
+		return nil, nil
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE access=? LIMIT 1", s.tableName)
+	var item StoreItem
+	err := s.db.SelectOne(&item, query, access)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return s.toTokenInfo(item.Data), nil
+}
+
+// GetByRefresh use the refresh token for token information data
+func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
+	if refresh == "" {
+		return nil, nil
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE refresh=? LIMIT 1", s.tableName)
+	var item StoreItem
+	err := s.db.SelectOne(&item, query, refresh)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return s.toTokenInfo(item.Data), nil
 }
