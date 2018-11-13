@@ -134,35 +134,21 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 	return s.db.Insert(&item)
 }
 
-// TODO: update below to xorm
-
 // RemoveByCode delete the authorization code
 func (s *Store) RemoveByCode(code string) error {
-	query := fmt.Sprintf("UPDATE %s SET code='' WHERE code=? LIMIT 1", s.tableName)
-	_, err := s.db.Exec(query, code)
-	if err != nil && err == sql.ErrNoRows {
-		return nil
-	}
+	_, err := s.db.Update(&StoreItem{}, &StoreItem{Code:""})
 	return err
 }
 
 // RemoveByAccess use the access token to delete the token information
 func (s *Store) RemoveByAccess(access string) error {
-	query := fmt.Sprintf("UPDATE %s SET access='' WHERE access=? LIMIT 1", s.tableName)
-	_, err := s.db.Exec(query, access)
-	if err != nil && err == sql.ErrNoRows {
-		return nil
-	}
+	_, err := s.db.Update(&StoreItem{}, &StoreItem{Access:""})
 	return err
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
 func (s *Store) RemoveByRefresh(refresh string) error {
-	query := fmt.Sprintf("UPDATE %s SET refresh='' WHERE refresh=? LIMIT 1", s.tableName)
-	_, err := s.db.Exec(query, refresh)
-	if err != nil && err == sql.ErrNoRows {
-		return nil
-	}
+	_, err := s.db.Update(&StoreItem{}, &StoreItem{Refresh:""})
 	return err
 }
 
@@ -171,6 +157,8 @@ func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 	jsoniter.Unmarshal([]byte(data), &tm)
 	return &tm
 }
+
+// TODO: update below to xorm
 
 // GetByCode use the authorization code for token information data
 func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
