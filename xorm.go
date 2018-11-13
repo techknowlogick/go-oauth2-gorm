@@ -108,8 +108,6 @@ func (s *Store) gc() {
 	}
 }
 
-// TODO: update below to xorm
-
 // Create create and store the new token information
 func (s *Store) Create(info oauth2.TokenInfo) error {
 	buf, _ := jsoniter.Marshal(info)
@@ -130,8 +128,10 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 		}
 	}
 
-	return s.db.Insert(item)
+	return s.db.Insert(&item)
 }
+
+// TODO: update below to xorm
 
 // RemoveByCode delete the authorization code
 func (s *Store) RemoveByCode(code string) error {
