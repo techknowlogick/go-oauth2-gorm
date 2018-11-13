@@ -116,6 +116,7 @@ func (s *Store) gc() {
 
 // Create create and store the new token information
 func (s *Store) Create(info oauth2.TokenInfo) error {
+	fmt.Println("TRY TO CREATE TOKEN BY STORING IT IN DB")
 	buf, _ := jsoniter.Marshal(info)
 	item := &StoreItem{
 		Data: string(buf),
