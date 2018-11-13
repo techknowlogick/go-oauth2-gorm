@@ -18,8 +18,8 @@ func TestTokenStore(t *testing.T) {
 	// wait gc
 	defer time.Sleep(time.Second * 2)
 
-	Convey("Test mysql token store", t, func() {
-		store := NewStore(NewConfig(dsn), "", 1)
+	Convey("Test token store", t, func() {
+		store := NewStore(NewConfig(dsn, dbType, ""), 1)
 
 		Convey("Test authorization code store", func() {
 			info := &models.Token{
