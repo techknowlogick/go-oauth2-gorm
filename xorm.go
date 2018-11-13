@@ -1,6 +1,7 @@
 package oauth2xorm
 
 import (
+  "fmt"
   "time"
   "os"
   "io"
@@ -71,6 +72,13 @@ type Store struct {
 	db        *xorm.Engine
 	stdout    io.Writer
 	ticker    *time.Ticker
+}
+
+func (s *Store) errorf(format string, args ...interface{}) {
+	if s.stdout != nil {
+		buf := fmt.Sprintf(format, args...)
+		s.stdout.Write([]byte(buf))
+	}
 }
 
 func (s *Store) gc() {
