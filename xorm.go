@@ -10,7 +10,6 @@ import (
   "github.com/go-xorm/xorm"
   "gopkg.in/oauth2.v3"
   "gopkg.in/oauth2.v3/models"
-  _ "github.com/mattn/go-sqlite3"
 )
 
 // StoreItem data item
@@ -102,12 +101,12 @@ func (s *Store) gc() {
 		now := time.Now().Unix()
 		counts, err := s.db.Where("expired_at > ?", now).Count(&StoreItem{})
 		if err != nil {
-			s.errorf("[ERROR]:%s", err.Error())
+			s.errorf("[ERROR]:%s\n", err.Error())
 			return
 		} else if counts > 0 {
 			_, err = s.db.Where("expired_at > ?", now).Delete(&StoreItem{})
 			if err != nil {
-				s.errorf("[ERROR]:%s", err.Error())
+				s.errorf("[ERROR]:%s\n", err.Error())
 			}
 		}
 	}
