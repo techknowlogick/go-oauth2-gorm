@@ -84,10 +84,10 @@ func TestTokenStore(t *testing.T) {
 		RefreshCreateAt:  time.Now(),
 		RefreshExpiresIn: time.Second * 15,
 	}
-	err := store.Create(info)
+	err = store.Create(info)
 	assert.Nil(err)
 
-	ainfo, err := store.GetByAccess(info.GetAccess())
+	ainfo, err = store.GetByAccess(info.GetAccess())
 	assert.Nil(err)
 	assert.Equal(ainfo.GetUserID(), info.GetUserID(), "they should be equal")
 
