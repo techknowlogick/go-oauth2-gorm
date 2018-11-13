@@ -140,7 +140,7 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 
 	fmt.Println(item)
 
-	_, err =  s.db.Insert(&item)
+	_, err =  s.db.InsertOne(&item)
 	return err
 }
 
