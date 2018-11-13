@@ -72,4 +72,42 @@ func TestTokenStore(t *testing.T) {
 	assert.Nil(err)
 	assert.Nil(ainfo)
 
+	// "Test refresh token store"
+	info = &models.Token{
+		ClientID:         "1",
+		UserID:           "1_2",
+		RedirectURI:      "http://localhost/",
+		Scope:            "all",
+		Access:           "1_2_1",
+		AccessCreateAt:   time.Now(),
+		AccessExpiresIn:  time.Second * 5,
+		Refresh:          "1_2_2",
+		RefreshCreateAt:  time.Now(),
+		RefreshExpiresIn: time.Second * 15,
+	}
+	err := store.Create(info)
+	assert.Nil(err)
+
+	ainfo, err := store.GetByAccess(info.GetAccess())
+	assert.Nil(err)\
+	assert.Equal(ainfo.GetUserID(), info.GetUserID(), "they should be equal")
+
+	err = store.RemoveByAccess(info.GetAccess())
+	assert.Nil(err)
+
+	ainfo, err = store.GetByAccess(info.GetAccess())
+	assert.Nil(err)
+	assert.Nil(ainfo)
+
+	rinfo, err := store.GetByRefresh(info.GetRefresh())
+	assert.Nil(err)
+	assert.Equal(rinfo.GetUserID(), info.GetUserID(), "they should be equal")
+
+	err = store.RemoveByRefresh(info.GetRefresh())
+	assert.Nil(err)
+
+	rinfo, err = store.GetByRefresh(info.GetRefresh())
+	assert.Nil(err)
+	assert.Nil(rinfo)
+
 }
