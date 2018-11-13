@@ -2,11 +2,11 @@ package oauth2xorm
 
 import (
   "fmt"
+  "encoding/json"
   "time"
   "os"
   "io"
 
-  "github.com/json-iterator/go"
   "github.com/go-xorm/xorm"
   "gopkg.in/oauth2.v3"
   "gopkg.in/oauth2.v3/models"
@@ -117,9 +117,12 @@ func (s *Store) gc() {
 // Create create and store the new token information
 func (s *Store) Create(info oauth2.TokenInfo) error {
 	fmt.Println("TRY TO CREATE TOKEN BY STORING IT IN DB")
-	buf, _ := jsoniter.Marshal(info)
+	jv, err := json.Marshal(info)
+	if err != nil {
+		return
+	}
 	item := &StoreItem{
-		Data: string(buf),
+		Data: jv,
 	}
 
 	if code := info.GetCode(); code != "" {
@@ -159,7 +162,10 @@ func (s *Store) RemoveByRefresh(refresh string) error {
 
 func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 	var tm models.Token
-	jsoniter.Unmarshal([]byte(data), &tm)
+	err = json.Unmarshal(data, &tm)
+	if err != nil {
+		return
+	}
 	return &tm
 }
 
