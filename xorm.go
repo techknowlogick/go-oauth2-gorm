@@ -131,7 +131,8 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 		}
 	}
 
-	return s.db.Insert(&item)
+	_, err :=  s.db.Insert(&item)
+	return err
 }
 
 // RemoveByCode delete the authorization code
