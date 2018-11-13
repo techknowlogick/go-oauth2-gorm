@@ -5,10 +5,7 @@ go:
   - "1.9.x"
   - "1.10.x"
   - "1.11.x"
-services:
-  #- mysql
 before_install:
-  #- mysql -e 'CREATE DATABASE myapp_test;'
   - go get -t -v ./...
 
 script:
