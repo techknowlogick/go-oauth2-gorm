@@ -162,7 +162,7 @@ func (s *Store) RemoveByRefresh(refresh string) error {
 
 func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 	var tm models.Token
-	err := json.Unmarshal(data, &tm)
+	err := json.Unmarshal([]byte(data), &tm)
 	if err != nil {
 		return nil
 	}
