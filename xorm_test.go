@@ -88,7 +88,7 @@ func TestTokenStore(t *testing.T) {
 	assert.Nil(err)
 
 	ainfo, err := store.GetByAccess(info.GetAccess())
-	assert.Nil(err)\
+	assert.Nil(err)
 	assert.Equal(ainfo.GetUserID(), info.GetUserID(), "they should be equal")
 
 	err = store.RemoveByAccess(info.GetAccess())
