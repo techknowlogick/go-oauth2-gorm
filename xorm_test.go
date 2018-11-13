@@ -7,12 +7,11 @@ import (
 	"gopkg.in/oauth2.v3/models"
 
 	. "github.com/smartystreets/goconvey/convey"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	dsn = "root:@tcp(127.0.0.1:3306)/myapp_test?charset=utf8"
+	dbType = "sqlite3"
+	dsn = "file::memory:?cache=shared"
 )
 
 func TestTokenStore(t *testing.T) {
