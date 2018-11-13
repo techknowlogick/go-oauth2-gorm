@@ -37,7 +37,7 @@ type Config struct {
 // NewStore create mysql store instance,
 func NewStore(config *Config, gcInterval int) *Store {
 	var err error
-	x, err = xorm.NewEngine(config.DBType config.DSN)
+	x, err = xorm.NewEngine(config.DBType, config.DSN)
 	if err != nil {
 		panic(err)
 	}
