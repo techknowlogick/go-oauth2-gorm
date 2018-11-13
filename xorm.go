@@ -37,8 +37,7 @@ type Config struct {
 
 // NewStore create mysql store instance,
 func NewStore(config *Config, gcInterval int) *Store {
-	var err error
-	x, err = xorm.NewEngine(config.DBType, config.DSN)
+	x, err := xorm.NewEngine(config.DBType, config.DSN)
 	if err != nil {
 		panic(err)
 	}
@@ -57,6 +56,10 @@ func NewStore(config *Config, gcInterval int) *Store {
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
 	// TODO: create table if not exist
+	err = x.Sync2(new(StoreItem))
+	if err != nil {
+		panic(err)
+	}
 
 	go store.gc()
 	return store
@@ -68,4 +71,20 @@ type Store struct {
 	db        *xorm.Engine
 	stdout    io.Writer
 	ticker    *time.Ticker
+}
+
+func (s *Store) gc() {
+	for range s.ticker.C {
+		now := time.Now().Unix()
+		counts, err := s.db.Where("expired_at > ?", now).Count(&StoreItem)
+		if err != nil {
+			s.errorf("[ERROR]:%s", err.Error())
+			return
+		} else if n > 0 {
+			_, err = s.db.Where("expired_at > ?", now).Delete(&StoreItem)
+			if err != nil {
+				s.errorf("[ERROR]:%s", err.Error())
+			}
+		}
+	}
 }
