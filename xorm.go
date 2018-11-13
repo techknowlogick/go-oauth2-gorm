@@ -54,7 +54,7 @@ func NewStore(config *Config, gcInterval int) *Store {
 	return NewStoreWithDB(config, x, gcInterval)
 }
 
-func NewStoreWithDB(config *Config, db *xorm.Engine, gcInterval int) *Store {
+func NewStoreWithDB(config *Config, x *xorm.Engine, gcInterval int) *Store {
 	store := &Store{
 		db:        x,
 		tableName: "oauth2_token",
@@ -70,7 +70,7 @@ func NewStoreWithDB(config *Config, db *xorm.Engine, gcInterval int) *Store {
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
 	// TODO: create table if not exist
-	err = x.Sync2(new(StoreItem))
+	err := x.Sync2(new(StoreItem))
 	if err != nil {
 		panic(err)
 	}
