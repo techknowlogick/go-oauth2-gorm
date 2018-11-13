@@ -84,12 +84,12 @@ func (s *Store) errorf(format string, args ...interface{}) {
 func (s *Store) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
-		counts, err := s.db.Where("expired_at > ?", now).Count(&StoreItem)
+		counts, err := s.db.Where("expired_at > ?", now).Count(&StoreItem{})
 		if err != nil {
 			s.errorf("[ERROR]:%s", err.Error())
 			return
-		} else if n > 0 {
-			_, err = s.db.Where("expired_at > ?", now).Delete(&StoreItem)
+		} else if counts > 0 {
+			_, err = s.db.Where("expired_at > ?", now).Delete(&StoreItem{})
 			if err != nil {
 				s.errorf("[ERROR]:%s", err.Error())
 			}
