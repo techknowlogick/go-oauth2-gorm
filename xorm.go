@@ -46,7 +46,6 @@ type Config struct {
 func NewStore(config *Config, gcInterval int) *Store {
 	x, err := xorm.NewEngine(config.DBType, config.DSN)
 	if err != nil {
-		fmt.Println("HERE FAIL TO CONNECT TO DB")
 		panic(err)
 	}
 	store := &Store{
@@ -66,7 +65,6 @@ func NewStore(config *Config, gcInterval int) *Store {
 	// TODO: create table if not exist
 	err = x.Sync2(new(StoreItem))
 	if err != nil {
-		fmt.Println("HERE FAIL TO CREATE DB")
 		panic(err)
 	}
 
@@ -118,7 +116,6 @@ func (s *Store) gc() {
 
 // Create create and store the new token information
 func (s *Store) Create(info oauth2.TokenInfo) error {
-	fmt.Println("TRY TO CREATE TOKEN BY STORING IT IN DB")
 	jv, err := json.Marshal(info)
 	if err != nil {
 		return err
@@ -139,8 +136,6 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 			item.ExpiredAt = info.GetRefreshCreateAt().Add(info.GetRefreshExpiresIn()).Unix()
 		}
 	}
-
-	fmt.Println(item)
 
 	_, err =  s.db.InsertOne(item)
 	return err
