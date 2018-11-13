@@ -3,7 +3,6 @@ package oauth2xorm
 import (
 	"testing"
 	"time"
-	"fmt"
 
 	"gopkg.in/oauth2.v3/models"
 
@@ -35,7 +34,6 @@ func TestTokenStore(t *testing.T) {
 				CodeCreateAt:  time.Now(),
 				CodeExpiresIn: time.Second * 5,
 			}
-			fmt.Println(info)
 			err := store.Create(info)
 			So(err, ShouldBeNil)
 

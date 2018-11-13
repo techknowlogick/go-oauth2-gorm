@@ -155,7 +155,7 @@ func (s *Store) RemoveByCode(code string) error {
 
 // RemoveByAccess use the access token to delete the token information
 func (s *Store) RemoveByAccess(access string) error {
-	_, err := s.db.Where("access = ?", access)..Update(&StoreItem{}, &StoreItem{Access:""})
+	_, err := s.db.Where("access = ?", access).Update(&StoreItem{}, &StoreItem{Access:""})
 	return err
 }
 
