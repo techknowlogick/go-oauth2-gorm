@@ -5,10 +5,12 @@ import (
   "time"
   "os"
   "io"
+
   "github.com/json-iterator/go"
   "github.com/go-xorm/xorm"
   "gopkg.in/oauth2.v3"
   "gopkg.in/oauth2.v3/models"
+  _ "github.com/mattn/go-sqlite3"
 )
 
 // StoreItem data item
