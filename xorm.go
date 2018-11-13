@@ -3,6 +3,7 @@ package oauth2xorm
 import (
   "time"
   "os"
+  "io"
   "github.com/go-xorm/xorm"
 )
 
