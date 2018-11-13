@@ -14,7 +14,7 @@ import (
 // StoreItem data item
 type StoreItem struct {
     ID        int64  `xorm:"pk autoincr"`
-	ExpiredAt time.Time
+	ExpiredAt int64
 	Code      string `xorm:"varchar(512)"`
 	Access    string `xorm:"varchar(512)"`
 	Refresh   string `xorm:"varchar(512)"`
