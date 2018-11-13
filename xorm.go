@@ -44,6 +44,7 @@ type Config struct {
 func NewStore(config *Config, gcInterval int) *Store {
 	x, err := xorm.NewEngine(config.DBType, config.DSN)
 	if err != nil {
+		fmt.Println("HERE FAIL TO CONNECT TO DB")
 		panic(err)
 	}
 	store := &Store{
@@ -63,6 +64,7 @@ func NewStore(config *Config, gcInterval int) *Store {
 	// TODO: create table if not exist
 	err = x.Sync2(new(StoreItem))
 	if err != nil {
+		fmt.Println("HERE FAIL TO CREATE DB")
 		panic(err)
 	}
 
