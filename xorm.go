@@ -165,7 +165,7 @@ func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 		return nil, nil
 	}
 
-	var item StoreItem{}
+	var item StoreItem
 	_, err := s.db.Where("code = ?", code).Get(&StoreItem)
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 		return nil, nil
 	}
 
-	var item StoreItem{}
+	var item StoreItem
 	_, err := s.db.Where("access = ?", access).Get(&StoreItem)
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 		return nil, nil
 	}
 
-	var item StoreItem{}
+	var item StoreItem
 	_, err := s.db.Where("refresh = ?", refresh).Get(&StoreItem)
 	if err != nil {
 		return nil, err
