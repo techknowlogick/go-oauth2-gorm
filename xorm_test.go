@@ -3,7 +3,6 @@ package oauth2xorm
 import (
 	"testing"
 	"time"
-	"fmt"
 
 	"gopkg.in/oauth2.v3/models"
 	"github.com/stretchr/testify/assert"
