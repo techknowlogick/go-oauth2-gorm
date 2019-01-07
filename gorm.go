@@ -70,7 +70,7 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	}
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
-	if err := db.Table(store.tableName).Create(&StoreItem{}).Error; err != nil {
+	if err := db.Table(store.tableName).CreateTable(&StoreItem{}).Error; err != nil {
 		panic(err)
 	}
 
