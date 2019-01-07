@@ -20,7 +20,7 @@ var noUpdateContent = "No content found to be updated"
 // StoreItem data item
 type StoreItem struct {
 	gorm.Model
-	ID        int64 `gorm:"AUTO_INCREMENT"`
+	//ID        int64 `gorm:"AUTO_INCREMENT"`
 	ExpiredAt int64
 	Code      string `gorm:"type:varchar(512)"`
 	Access    string `gorm:"type:varchar(512)"`
@@ -70,8 +70,10 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	}
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
-	if err := db.Table(store.tableName).CreateTable(&StoreItem{}).Error; err != nil {
-		panic(err)
+	if !db.HasTable(store.tableName) {
+		if err := db.Table(store.tableName).CreateTable(&StoreItem{}).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	go store.gc()
@@ -178,6 +180,9 @@ func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("code = ?", code).Find(&item).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -191,6 +196,9 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("access = ?", access).Find(&item).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -204,6 +212,9 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("refresh = ?", refresh).Find(&item).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
