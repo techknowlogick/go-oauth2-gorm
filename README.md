@@ -1,4 +1,4 @@
-# go-oauth2-xorm
+# go-oauth2-gorm
 
 
 ## Credits
