@@ -1,37 +1,38 @@
 package oauth2xorm
 
 import (
-  "fmt"
-  "encoding/json"
-  "time"
-  "os"
-  "io"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"time"
 
-  "github.com/jinzhu/gorm"
-  "gopkg.in/oauth2.v3"
-  "gopkg.in/oauth2.v3/models"
-  _ "github.com/jinzhu/gorm/dialects/sqlite"
-  _ "github.com/jinzhu/gorm/dialects/mysql"
-  _ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/models"
 )
 
 var noUpdateContent = "No content found to be updated"
 
 // StoreItem data item
 type StoreItem struct {
-	ID        int64  `xorm:"pk autoincr"`
+	gorm.Model
+	ID        int64 `gorm:"AUTO_INCREMENT"`
 	ExpiredAt int64
-	Code      string `xorm:"varchar(512)"`
-	Access    string `xorm:"varchar(512)"`
-	Refresh   string `xorm:"varchar(512)"`
-	Data      string `xorm:"text"`
+	Code      string `gorm:"type:varchar(512)"`
+	Access    string `gorm:"type:varchar(512)"`
+	Refresh   string `gorm:"type:varchar(512)"`
+	Data      string `gorm:"type:text"`
 }
 
 // NewConfig create mysql configuration instance
 func NewConfig(dsn string, dbType string, tableName string) *Config {
 	return &Config{
 		DSN:         dsn,
-		DBType:	     dbType,
+		DBType:      dbType,
 		TableName:   tableName,
 		MaxLifetime: time.Hour * 2,
 	}
@@ -47,16 +48,16 @@ type Config struct {
 
 // NewStore create mysql store instance,
 func NewStore(config *Config, gcInterval int) *Store {
-	x, err := xorm.NewEngine(config.DBType, config.DSN)
+	db, err := gorm.Open(config.DBType, config.DSN)
 	if err != nil {
 		panic(err)
 	}
-	return NewStoreWithDB(config, x, gcInterval)
+	return NewStoreWithDB(config, db, gcInterval)
 }
 
-func NewStoreWithDB(config *Config, x *xorm.Engine, gcInterval int) *Store {
+func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	store := &Store{
-		db:        x,
+		db:        db,
 		tableName: "oauth2_token",
 		stdout:    os.Stderr,
 	}
@@ -69,9 +70,7 @@ func NewStoreWithDB(config *Config, x *xorm.Engine, gcInterval int) *Store {
 	}
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
-	// TODO: create table if not exist
-	err := x.Sync2(new(StoreItem))
-	if err != nil {
+	if err := db.Table(store.tableName).Create(&StoreItem) {
 		panic(err)
 	}
 
@@ -82,7 +81,7 @@ func NewStoreWithDB(config *Config, x *xorm.Engine, gcInterval int) *Store {
 // Store mysql token store
 type Store struct {
 	tableName string
-	db        *xorm.Engine
+	db        *gorm.DB
 	stdout    io.Writer
 	ticker    *time.Ticker
 }
@@ -108,13 +107,13 @@ func (s *Store) errorf(format string, args ...interface{}) {
 func (s *Store) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
-		counts, err := s.db.Where("expired_at > ?", now).Count(&StoreItem{})
-		if err != nil {
+		var count int
+		if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Count(&count) {
 			s.errorf("[ERROR]:%s\n", err.Error())
 			return
-		} else if counts > 0 {
-			_, err = s.db.Where("expired_at > ?", now).Delete(&StoreItem{})
-			if err != nil {
+		}
+		if count > 0 {
+			if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Delete(&StoreItem{}) {
 				s.errorf("[ERROR]:%s\n", err.Error())
 			}
 		}
@@ -144,27 +143,22 @@ func (s *Store) Create(info oauth2.TokenInfo) error {
 		}
 	}
 
-	_, err =  s.db.InsertOne(item)
-	return err
+	return s.db.Table(s.tableName).Create(item)
 }
 
 // RemoveByCode delete the authorization code
 func (s *Store) RemoveByCode(code string) error {
-	_, err := s.db.Where("code = ?", code).Cols("code").Update(&StoreItem{Code:""})
-
-	return err
+	return s.db.Table(s.tableName).Where("code = ?", code).Update("code", "")
 }
 
 // RemoveByAccess use the access token to delete the token information
 func (s *Store) RemoveByAccess(access string) error {
-	_, err := s.db.Where("access = ?", access).Cols("access").Update(&StoreItem{Access:""})
-	return err
+	return s.db.Table(s.tableName).Where("access = ?", access).Update("access", "")
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
 func (s *Store) RemoveByRefresh(refresh string) error {
-	_, err := s.db.Where("refresh = ?", refresh).Cols("refresh").Update(&StoreItem{Refresh:""})
-	return err
+	return s.db.Table(s.tableName).Where("refresh = ?", refresh).Update("refresh", "")
 }
 
 func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
@@ -183,8 +177,7 @@ func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	_, err := s.db.Where("code = ?", code).Get(&item)
-	if err != nil {
+	if err := s.db.Table(s.tableName).Where("code = ?", code).Find(&item) {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -197,8 +190,7 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	_, err := s.db.Where("access = ?", access).Get(&item)
-	if err != nil {
+	if err := s.db.Table(s.tableName).Where("access = ?", access).Find(&item) {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -211,8 +203,7 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	_, err := s.db.Where("refresh = ?", refresh).Get(&item)
-	if err != nil {
+	if err := s.db.Table(s.tableName).Where("refresh = ?", refresh).Find(&item) {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
