@@ -70,7 +70,7 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	}
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
-	if err := db.Table(store.tableName).Create(&StoreItem) {
+	if err := db.Table(store.tableName).Create(&StoreItem); err != nil {
 		panic(err)
 	}
 
@@ -108,12 +108,12 @@ func (s *Store) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
 		var count int
-		if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Count(&count) {
+		if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Count(&count); err != nil {
 			s.errorf("[ERROR]:%s\n", err.Error())
 			return
 		}
 		if count > 0 {
-			if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Delete(&StoreItem{}) {
+			if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Delete(&StoreItem{}); err != nil {
 				s.errorf("[ERROR]:%s\n", err.Error())
 			}
 		}
@@ -177,7 +177,7 @@ func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	if err := s.db.Table(s.tableName).Where("code = ?", code).Find(&item) {
+	if err := s.db.Table(s.tableName).Where("code = ?", code).Find(&item); err != nil {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -190,7 +190,7 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	if err := s.db.Table(s.tableName).Where("access = ?", access).Find(&item) {
+	if err := s.db.Table(s.tableName).Where("access = ?", access).Find(&item); err != nil {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
@@ -203,7 +203,7 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 	}
 
 	var item StoreItem
-	if err := s.db.Table(s.tableName).Where("refresh = ?", refresh).Find(&item) {
+	if err := s.db.Table(s.tableName).Where("refresh = ?", refresh).Find(&item); err != nil {
 		return nil, err
 	}
 	return s.toTokenInfo(item.Data), nil
