@@ -7,19 +7,19 @@ import (
   "os"
   "io"
 
-  "github.com/go-xorm/xorm"
+  "github.com/jinzhu/gorm"
   "gopkg.in/oauth2.v3"
   "gopkg.in/oauth2.v3/models"
-  _ "github.com/mattn/go-sqlite3"
-  _ "github.com/go-sql-driver/mysql"
-  _ "github.com/lib/pq"
+  _ "github.com/jinzhu/gorm/dialects/sqlite"
+  _ "github.com/jinzhu/gorm/dialects/mysql"
+  _ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var noUpdateContent = "No content found to be updated"
 
 // StoreItem data item
 type StoreItem struct {
-    ID        int64  `xorm:"pk autoincr"`
+	ID        int64  `xorm:"pk autoincr"`
 	ExpiredAt int64
 	Code      string `xorm:"varchar(512)"`
 	Access    string `xorm:"varchar(512)"`
@@ -31,7 +31,7 @@ type StoreItem struct {
 func NewConfig(dsn string, dbType string, tableName string) *Config {
 	return &Config{
 		DSN:         dsn,
-		DBType:		 dbType,
+		DBType:	     dbType,
 		TableName:   tableName,
 		MaxLifetime: time.Hour * 2,
 	}
