@@ -1,4 +1,4 @@
-package oauth2xorm
+package oauth2gorm
 
 import (
 	"encoding/json"
