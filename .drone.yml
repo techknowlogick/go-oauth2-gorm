@@ -1,0 +1,18 @@
+---
+kind: pipeline
+name: default
+
+workspace:
+  base: /go
+  path: src/github.com/techknowlogick/go-oauth2-gorm
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build-go
+    image: golang:1.12
+    commands:
+    - go get -t -v ./...
+    - go test -race -coverprofile=coverage.txt -covermode=atomic
