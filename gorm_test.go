@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	dbType = "sqlite3"
-	dsn = "file::memory:?cache=shared"
+	dbType = SQLite
+	dsn    = "file::memory:?cache=shared"
 )
 
 func TestTokenStore(t *testing.T) {

@@ -4,15 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/models"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var noUpdateContent = "No content found to be updated"
@@ -29,7 +32,7 @@ type StoreItem struct {
 }
 
 // NewConfig create mysql configuration instance
-func NewConfig(dsn string, dbType string, tableName string) *Config {
+func NewConfig(dsn string, dbType DBType, tableName string) *Config {
 	return &Config{
 		DSN:         dsn,
 		DBType:      dbType,
@@ -38,20 +41,67 @@ func NewConfig(dsn string, dbType string, tableName string) *Config {
 	}
 }
 
-// Config xorm configuration
+// Config gorm configuration
 type Config struct {
 	DSN         string
-	DBType      string
+	DBType      DBType
 	TableName   string
 	MaxLifetime time.Duration
 }
 
+type DBType int8
+
+const (
+	MySQL = iota
+	PostgreSQL
+	SQLite
+	SQLServer
+)
+
+var defaultConfig = &gorm.Config{
+	Logger: logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold: time.Second, // slow SQL
+			LogLevel:      logger.Info, // log level
+			Colorful:      true,        // color
+		},
+	),
+}
+
 // NewStore create mysql store instance,
 func NewStore(config *Config, gcInterval int) *Store {
-	db, err := gorm.Open(config.DBType, config.DSN)
+	var d gorm.Dialector
+	switch config.DBType {
+	case MySQL:
+		d = mysql.New(mysql.Config{
+			DSN: config.DSN,
+		})
+	case PostgreSQL:
+		d = postgres.New(postgres.Config{
+			DSN: config.DSN,
+		})
+	case SQLite:
+		d = sqlite.Open(config.DSN)
+	case SQLServer:
+		d = sqlserver.Open(config.DSN)
+	default:
+		fmt.Println("unsupported databases")
+		return nil
+	}
+	db, err := gorm.Open(d, defaultConfig)
 	if err != nil {
 		panic(err)
 	}
+	// default client pool
+	s, err := db.DB()
+	if err != nil {
+		panic(err)
+	}
+	s.SetMaxIdleConns(10)
+	s.SetMaxOpenConns(100)
+	s.SetConnMaxLifetime(time.Hour)
+
 	return NewStoreWithDB(config, db, gcInterval)
 }
 
@@ -70,8 +120,8 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	}
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
-	if !db.HasTable(store.tableName) {
-		if err := db.Table(store.tableName).CreateTable(&StoreItem{}).Error; err != nil {
+	if !db.Migrator().HasTable(store.tableName) {
+		if err := db.Table(store.tableName).Migrator().CreateTable(&StoreItem{}); err != nil {
 			panic(err)
 		}
 	}
@@ -109,13 +159,14 @@ func (s *Store) errorf(format string, args ...interface{}) {
 func (s *Store) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
-		var count int
-		if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Count(&count).Error; err != nil {
+		var count int64
+		if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Count(&count).Error; err != nil {
 			s.errorf("[ERROR]:%s\n", err)
 			return
 		}
 		if count > 0 {
-			if err := s.db.Table(s.tableName).Where("expired_at > ?", now).Delete(&StoreItem{}).Error; err != nil {
+			// not soft delete.
+			if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Unscoped().Delete(&StoreItem{}).Error; err != nil {
 				s.errorf("[ERROR]:%s\n", err)
 			}
 		}
@@ -180,11 +231,12 @@ func (s *Store) GetByCode(code string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("code = ?", code).Find(&item).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
+	if item.ID == 0 {
+		return nil, nil
+	}
+
 	return s.toTokenInfo(item.Data), nil
 }
 
@@ -196,11 +248,12 @@ func (s *Store) GetByAccess(access string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("access = ?", access).Find(&item).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
+	if item.ID == 0 {
+		return nil, nil
+	}
+
 	return s.toTokenInfo(item.Data), nil
 }
 
@@ -212,10 +265,11 @@ func (s *Store) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 
 	var item StoreItem
 	if err := s.db.Table(s.tableName).Where("refresh = ?", refresh).Find(&item).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
+	if item.ID == 0 {
+		return nil, nil
+	}
+
 	return s.toTokenInfo(item.Data), nil
 }
