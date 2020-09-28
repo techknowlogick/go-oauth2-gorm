@@ -12,7 +12,7 @@ platform:
 
 steps:
   - name: build-go
-    image: golang:1.12
+    image: golang:1.14
     commands:
     - go get -t -v ./...
     - go test -race -coverprofile=coverage.txt -covermode=atomic
