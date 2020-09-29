@@ -10,17 +10,17 @@ import (
 )
 
 const (
-	dbType = "sqlite3"
-	dsn = "file::memory:?cache=shared"
+	dbType = SQLite
+	dsn    = "file::memory:?cache=shared"
 )
 
 func TestTokenStore(t *testing.T) {
 	// wait gc
 	defer time.Sleep(time.Second * 2)
 
-	Convey("Test token store", t, func() {
-		store := NewStore(NewConfig(dsn, dbType, ""), 1)
+	store := NewStore(NewConfig(dsn, dbType, ""), 1)
 
+	Convey("Test token store", t, func() {
 		Convey("Test authorization code store", func() {
 			info := &models.Token{
 				ClientID:      "1",
