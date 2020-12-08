@@ -1,4 +1,4 @@
-module go-oauth2-gorm
+module src.techknowlogick.com/oauth2-gorm
 
 require (
 	github.com/smartystreets/goconvey v1.6.4
