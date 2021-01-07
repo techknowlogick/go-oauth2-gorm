@@ -1,8 +1,8 @@
 module src.techknowlogick.com/oauth2-gorm
 
 require (
+	github.com/go-oauth2/oauth2/v4 v4.2.0
 	github.com/smartystreets/goconvey v1.6.4
-	gopkg.in/oauth2.v3 v3.12.0
 	gorm.io/driver/mysql v1.0.1
 	gorm.io/driver/postgres v1.0.1
 	gorm.io/driver/sqlite v1.1.3
