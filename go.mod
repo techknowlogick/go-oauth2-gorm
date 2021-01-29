@@ -1,4 +1,4 @@
-module src.techknowlogick.com/oauth2-gorm
+module https://github.com/techknowlogick/oauth2-gorm
 
 require (
 	github.com/go-oauth2/oauth2/v4 v4.2.0
