@@ -20,7 +20,7 @@ import (
 )
 
 // StoreItem data item
-type StoreItem struct {
+type TokenStoreItem struct {
 	gorm.Model
 
 	ExpiredAt int64
@@ -69,7 +69,7 @@ var defaultConfig = &gorm.Config{
 }
 
 // NewStore create mysql store instance,
-func NewStore(config *Config, gcInterval int) *Store {
+func NewTokenStore(config *Config, gcInterval int) *TokenStore {
 	var d gorm.Dialector
 	switch config.DBType {
 	case MySQL:
@@ -104,8 +104,8 @@ func NewStore(config *Config, gcInterval int) *Store {
 	return NewStoreWithDB(config, db, gcInterval)
 }
 
-func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
-	store := &Store{
+func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *TokenStore {
+	store := &TokenStore{
 		db:        db,
 		tableName: "oauth2_token",
 		stdout:    os.Stderr,
@@ -120,7 +120,7 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 	store.ticker = time.NewTicker(time.Second * time.Duration(interval))
 
 	if !db.Migrator().HasTable(store.tableName) {
-		if err := db.Table(store.tableName).Migrator().CreateTable(&StoreItem{}); err != nil {
+		if err := db.Table(store.tableName).Migrator().CreateTable(&TokenStoreItem{}); err != nil {
 			panic(err)
 		}
 	}
@@ -130,7 +130,7 @@ func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *Store {
 }
 
 // Store mysql token store
-type Store struct {
+type TokenStore struct {
 	tableName string
 	db        *gorm.DB
 	stdout    io.Writer
@@ -138,24 +138,24 @@ type Store struct {
 }
 
 // SetStdout set error output
-func (s *Store) SetStdout(stdout io.Writer) *Store {
+func (s *TokenStore) SetStdout(stdout io.Writer) *TokenStore {
 	s.stdout = stdout
 	return s
 }
 
 // Close close the store
-func (s *Store) Close() {
+func (s *TokenStore) Close() {
 	s.ticker.Stop()
 }
 
-func (s *Store) errorf(format string, args ...interface{}) {
+func (s *TokenStore) errorf(format string, args ...interface{}) {
 	if s.stdout != nil {
 		buf := fmt.Sprintf(format, args...)
 		s.stdout.Write([]byte(buf))
 	}
 }
 
-func (s *Store) gc() {
+func (s *TokenStore) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
 		var count int64
@@ -165,7 +165,7 @@ func (s *Store) gc() {
 		}
 		if count > 0 {
 			// not soft delete.
-			if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Unscoped().Delete(&StoreItem{}).Error; err != nil {
+			if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Unscoped().Delete(&TokenStoreItem{}).Error; err != nil {
 				s.errorf("[ERROR]:%s\n", err)
 			}
 		}
@@ -173,12 +173,12 @@ func (s *Store) gc() {
 }
 
 // Create create and store the new token information
-func (s *Store) Create(ctx context.Context, info oauth2.TokenInfo) error {
+func (s *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	jv, err := json.Marshal(info)
 	if err != nil {
 		return err
 	}
-	item := &StoreItem{
+	item := &TokenStoreItem{
 		Data: string(jv),
 	}
 
@@ -199,7 +199,7 @@ func (s *Store) Create(ctx context.Context, info oauth2.TokenInfo) error {
 }
 
 // RemoveByCode delete the authorization code
-func (s *Store) RemoveByCode(ctx context.Context, code string) error {
+func (s *TokenStore) RemoveByCode(ctx context.Context, code string) error {
 	return s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("code = ?", code).
@@ -208,7 +208,7 @@ func (s *Store) RemoveByCode(ctx context.Context, code string) error {
 }
 
 // RemoveByAccess use the access token to delete the token information
-func (s *Store) RemoveByAccess(ctx context.Context, access string) error {
+func (s *TokenStore) RemoveByAccess(ctx context.Context, access string) error {
 	return s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("access = ?", access).
@@ -217,7 +217,7 @@ func (s *Store) RemoveByAccess(ctx context.Context, access string) error {
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
-func (s *Store) RemoveByRefresh(ctx context.Context, refresh string) error {
+func (s *TokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
 	return s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("refresh = ?", refresh).
@@ -225,7 +225,7 @@ func (s *Store) RemoveByRefresh(ctx context.Context, refresh string) error {
 		Error
 }
 
-func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
+func (s *TokenStore) toTokenInfo(data string) oauth2.TokenInfo {
 	var tm models.Token
 	err := json.Unmarshal([]byte(data), &tm)
 	if err != nil {
@@ -235,12 +235,12 @@ func (s *Store) toTokenInfo(data string) oauth2.TokenInfo {
 }
 
 // GetByCode use the authorization code for token information data
-func (s *Store) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
+func (s *TokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	if code == "" {
 		return nil, nil
 	}
 
-	var item StoreItem
+	var item TokenStoreItem
 	if err := s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("code = ?", code).
@@ -255,12 +255,12 @@ func (s *Store) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, e
 }
 
 // GetByAccess use the access token for token information data
-func (s *Store) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
+func (s *TokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	if access == "" {
 		return nil, nil
 	}
 
-	var item StoreItem
+	var item TokenStoreItem
 	if err := s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("access = ?", access).
@@ -275,12 +275,12 @@ func (s *Store) GetByAccess(ctx context.Context, access string) (oauth2.TokenInf
 }
 
 // GetByRefresh use the refresh token for token information data
-func (s *Store) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
+func (s *TokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	if refresh == "" {
 		return nil, nil
 	}
 
-	var item StoreItem
+	var item TokenStoreItem
 	if err := s.db.WithContext(ctx).
 		Table(s.tableName).
 		Where("refresh = ?", refresh).
