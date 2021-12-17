@@ -5,14 +5,15 @@ import (
 	"io"
 	"encoding/json"
 	"os"
+	"time"
 
+	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type ClientStoreItem struct {
@@ -58,7 +59,7 @@ func NewClientStore(config *Config, gcInterval int) *ClientStore {
 	return NewClientStoreWithDB(config, db)
 }
 
-func NewClientstoreWithDB(config *Config, db *gorm.DB) *ClientStore {
+func NewClientStoreWithDB(config *Config, db *gorm.DB) *ClientStore {
 	store := &ClientStore{
 		db: db,
 		tableName: "oauth2_clients",
@@ -100,14 +101,9 @@ func (s *ClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 		return nil, err
 	}
 
-	return s.toClientInfo(item.Data)
+	return s.toClientInfo([]byte(item.Data))
 }
 
 func (s *ClientStore) Create(info oauth2.ClientInfo) error {
-	data, err := json.Marshal(info)
-	if err != nil {
-		return err
-	}
-
-	return s.db.Table(s.tableName).Create(info)
+	return s.db.Table(s.tableName).Create(info).Error
 }
