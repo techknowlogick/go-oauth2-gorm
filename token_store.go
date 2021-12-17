@@ -19,7 +19,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// StoreItem data item
 type TokenStoreItem struct {
 	gorm.Model
 
@@ -28,44 +27,6 @@ type TokenStoreItem struct {
 	Access    string `gorm:"type:varchar(512)"`
 	Refresh   string `gorm:"type:varchar(512)"`
 	Data      string `gorm:"type:text"`
-}
-
-// NewConfig create mysql configuration instance
-func NewConfig(dsn string, dbType DBType, tableName string) *Config {
-	return &Config{
-		DSN:         dsn,
-		DBType:      dbType,
-		TableName:   tableName,
-		MaxLifetime: time.Hour * 2,
-	}
-}
-
-// Config gorm configuration
-type Config struct {
-	DSN         string
-	DBType      DBType
-	TableName   string
-	MaxLifetime time.Duration
-}
-
-type DBType int8
-
-const (
-	MySQL = iota
-	PostgreSQL
-	SQLite
-	SQLServer
-)
-
-var defaultConfig = &gorm.Config{
-	Logger: logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold: time.Second, // slow SQL
-			LogLevel:      logger.Info, // log level
-			Colorful:      true,        // color
-		},
-	),
 }
 
 // NewStore create mysql store instance,
@@ -101,10 +62,10 @@ func NewTokenStore(config *Config, gcInterval int) *TokenStore {
 	s.SetMaxOpenConns(100)
 	s.SetConnMaxLifetime(time.Hour)
 
-	return NewStoreWithDB(config, db, gcInterval)
+	return NewTokenStoreWithDB(config, db, gcInterval)
 }
 
-func NewStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *TokenStore {
+func NewTokenStoreWithDB(config *Config, db *gorm.DB, gcInterval int) *TokenStore {
 	store := &TokenStore{
 		db:        db,
 		tableName: "oauth2_token",
