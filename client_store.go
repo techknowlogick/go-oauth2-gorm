@@ -1,9 +1,9 @@
 package oauth2gorm
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"encoding/json"
 	"os"
 	"time"
 
@@ -24,7 +24,7 @@ type ClientStoreItem struct {
 	Data   string `gorm:"type:text"`
 }
 
-func NewClientStore(config *Config, gcInterval int) *ClientStore {
+func NewClientStore(config *Config) *ClientStore {
 	var d gorm.Dialector
 	switch config.DBType {
 	case MySQL:
@@ -70,7 +70,7 @@ func NewClientStoreWithDB(config *Config, db *gorm.DB) *ClientStore {
 	}
 
 	if !db.Migrator().HasTable(store.tableName) {
-		if err := db.Table(store.tableName).Migrator().CreateTable(&TokenStoreItem{}); err != nil {
+		if err := db.Table(store.tableName).Migrator().CreateTable(&ClientStoreItem{}); err != nil {
 			panic(err)
 		}
 	}
@@ -105,5 +105,15 @@ func (s *ClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 }
 
 func (s *ClientStore) Create(info oauth2.ClientInfo) error {
-	return s.db.Table(s.tableName).Create(info).Error
+	data, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+	item := &ClientStoreItem{
+		Secret: info.GetSecret(),
+		Domain: info.GetDomain(),
+		Data: string(data),
+	}
+
+	return s.db.Table(s.tableName).Create(item).Error
 }
