@@ -9,12 +9,13 @@ import (
 )
 
 func TestClientStore(t *testing.T) {
-	cstore := NewClientStore(NewConfig(dsn, dbType, ""))
+	config, dialector := NewConfig(dsn, dbType, "")
+	cstore := NewClientStore(config, dialector)
 
-	Convey("Test client store", t, func(){
+	Convey("Test client store", t, func() {
 		Convey("Test create client", func() {
 			info := &models.Client{
-				ID: "1",
+				ID:     "1",
 				Secret: "the secret",
 				Domain: "http://localhost/",
 				UserID: "1_1",
@@ -29,4 +30,3 @@ func TestClientStore(t *testing.T) {
 		})
 	})
 }
-

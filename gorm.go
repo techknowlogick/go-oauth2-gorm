@@ -1,10 +1,15 @@
 package oauth2gorm
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -37,11 +42,32 @@ var defaultConfig = &gorm.Config{
 	),
 }
 
-func NewConfig(dsn string, dbType DBType, tableName string) *Config {
-	return &Config{
+func NewConfig(dsn string, dbType DBType, tableName string) (*Config, gorm.Dialector) {
+	config := &Config{
 		DSN:         dsn,
 		DBType:      dbType,
 		TableName:   tableName,
 		MaxLifetime: time.Hour * 2,
 	}
+
+	var d gorm.Dialector
+
+	switch dbType {
+	case MySQL:
+		d = mysql.New(mysql.Config{
+			DSN: config.DSN,
+		})
+	case PostgreSQL:
+		d = postgres.New(postgres.Config{
+			DSN: config.DSN,
+		})
+	case SQLite:
+		d = sqlite.Open(config.DSN)
+	case SQLServer:
+		d = sqlserver.Open(config.DSN)
+	default:
+		fmt.Println("unsupported databases")
+		d = nil
+	}
+	return config, d
 }

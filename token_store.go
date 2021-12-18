@@ -10,10 +10,6 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/models"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 )
 
@@ -28,25 +24,8 @@ type TokenStoreItem struct {
 }
 
 // NewStore create mysql store instance,
-func NewTokenStore(config *Config, gcInterval int) *TokenStore {
-	var d gorm.Dialector
-	switch config.DBType {
-	case MySQL:
-		d = mysql.New(mysql.Config{
-			DSN: config.DSN,
-		})
-	case PostgreSQL:
-		d = postgres.New(postgres.Config{
-			DSN: config.DSN,
-		})
-	case SQLite:
-		d = sqlite.Open(config.DSN)
-	case SQLServer:
-		d = sqlserver.Open(config.DSN)
-	default:
-		fmt.Println("unsupported databases")
-		return nil
-	}
+func NewTokenStore(config *Config, d gorm.Dialector, gcInterval int) *TokenStore {
+
 	db, err := gorm.Open(d, defaultConfig)
 	if err != nil {
 		panic(err)

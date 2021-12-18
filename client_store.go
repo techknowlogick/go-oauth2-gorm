@@ -2,17 +2,12 @@ package oauth2gorm
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/models"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 )
 
@@ -24,25 +19,7 @@ type ClientStoreItem struct {
 	Data   string `gorm:"type:text"`
 }
 
-func NewClientStore(config *Config) *ClientStore {
-	var d gorm.Dialector
-	switch config.DBType {
-	case MySQL:
-		d = mysql.New(mysql.Config{
-			DSN: config.DSN,
-		})
-	case PostgreSQL:
-		d = postgres.New(postgres.Config{
-			DSN: config.DSN,
-		})
-	case SQLite:
-		d = sqlite.Open(config.DSN)
-	case SQLServer:
-		d = sqlserver.Open(config.DSN)
-	default:
-		fmt.Println("unsupported databases")
-		return nil
-	}
+func NewClientStore(config *Config, d gorm.Dialector) *ClientStore {
 	db, err := gorm.Open(d, defaultConfig)
 	if err != nil {
 		panic(err)

@@ -19,7 +19,9 @@ func TestTokenStore(t *testing.T) {
 	// wait gc
 	defer time.Sleep(time.Second * 2)
 
-	store := NewTokenStore(NewConfig(dsn, dbType, ""), 1)
+	config, dialector := NewConfig(dsn, dbType, "")
+
+	store := NewTokenStore(config, dialector, 1)
 
 	Convey("Test token store", t, func() {
 		Convey("Test authorization code store", func() {
