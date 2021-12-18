@@ -24,9 +24,9 @@ type TokenStoreItem struct {
 }
 
 // NewStore create mysql store instance,
-func NewTokenStore(config *Config, d gorm.Dialector, gcInterval int) *TokenStore {
+func NewTokenStore(config *Config, gcInterval int) *TokenStore {
 
-	db, err := gorm.Open(d, defaultConfig)
+	db, err := gorm.Open(config.Dialector, defaultConfig)
 	if err != nil {
 		panic(err)
 	}

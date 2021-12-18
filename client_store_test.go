@@ -9,8 +9,7 @@ import (
 )
 
 func TestClientStore(t *testing.T) {
-	config, dialector := NewConfig(dsn, dbType, "")
-	cstore := NewClientStore(config, dialector)
+	cstore := NewClientStore(NewConfig(dsn, dbType, ""))
 
 	Convey("Test client store", t, func() {
 		Convey("Test create client", func() {

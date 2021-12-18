@@ -19,8 +19,8 @@ type ClientStoreItem struct {
 	Data   string `gorm:"type:text"`
 }
 
-func NewClientStore(config *Config, d gorm.Dialector) *ClientStore {
-	db, err := gorm.Open(d, defaultConfig)
+func NewClientStore(config *Config) *ClientStore {
+	db, err := gorm.Open(config.Dialector, defaultConfig)
 	if err != nil {
 		panic(err)
 	}

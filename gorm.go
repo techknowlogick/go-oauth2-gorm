@@ -18,10 +18,9 @@ type DBType int8
 
 // Config gorm configuration
 type Config struct {
-	DSN         string
-	DBType      DBType
 	TableName   string
 	MaxLifetime time.Duration
+	Dialector   gorm.Dialector
 }
 
 const (
@@ -42,32 +41,32 @@ var defaultConfig = &gorm.Config{
 	),
 }
 
-func NewConfig(dsn string, dbType DBType, tableName string) (*Config, gorm.Dialector) {
-	config := &Config{
-		DSN:         dsn,
-		DBType:      dbType,
-		TableName:   tableName,
-		MaxLifetime: time.Hour * 2,
-	}
-
+func NewConfig(dsn string, dbType DBType, tableName string) *Config {
 	var d gorm.Dialector
 
 	switch dbType {
 	case MySQL:
 		d = mysql.New(mysql.Config{
-			DSN: config.DSN,
+			DSN: dsn,
 		})
 	case PostgreSQL:
 		d = postgres.New(postgres.Config{
-			DSN: config.DSN,
+			DSN: dsn,
 		})
 	case SQLite:
-		d = sqlite.Open(config.DSN)
+		d = sqlite.Open(dsn)
 	case SQLServer:
-		d = sqlserver.Open(config.DSN)
+		d = sqlserver.Open(dsn)
 	default:
 		fmt.Println("unsupported databases")
 		d = nil
 	}
-	return config, d
+
+	config := &Config{
+		TableName:   tableName,
+		MaxLifetime: time.Hour * 2,
+		Dialector:   d,
+	}
+
+	return config
 }
