@@ -19,8 +19,8 @@ import (
 type ClientStoreItem struct {
 	gorm.Model
 
-	Secret      string `gorm:"type:varchar(512)"`
-	Domain    string `gorm:"type:varchar(512)"`
+	Secret string `gorm:"type:varchar(512)"`
+	Domain string `gorm:"type:varchar(512)"`
 	Data   string `gorm:"type:text"`
 }
 
@@ -61,9 +61,9 @@ func NewClientStore(config *Config) *ClientStore {
 
 func NewClientStoreWithDB(config *Config, db *gorm.DB) *ClientStore {
 	store := &ClientStore{
-		db: db,
+		db:        db,
 		tableName: "oauth2_clients",
-		stdout: os.Stderr,
+		stdout:    os.Stderr,
 	}
 	if config.TableName != "" {
 		store.tableName = config.TableName
@@ -80,8 +80,8 @@ func NewClientStoreWithDB(config *Config, db *gorm.DB) *ClientStore {
 
 type ClientStore struct {
 	tableName string
-	db *gorm.DB
-	stdout io.Writer
+	db        *gorm.DB
+	stdout    io.Writer
 }
 
 func (s *ClientStore) toClientInfo(data []byte) (oauth2.ClientInfo, error) {
@@ -112,7 +112,7 @@ func (s *ClientStore) Create(info oauth2.ClientInfo) error {
 	item := &ClientStoreItem{
 		Secret: info.GetSecret(),
 		Domain: info.GetDomain(),
-		Data: string(data),
+		Data:   string(data),
 	}
 
 	return s.db.Table(s.tableName).Create(item).Error
