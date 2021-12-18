@@ -1,7 +1,0 @@
-name: Go Oauth2 Gorm Unit Test
-on: [push]
-jobs:
-  Test:
-    runs-on: golang:latest
-    steps:
-      - run: go test -v
