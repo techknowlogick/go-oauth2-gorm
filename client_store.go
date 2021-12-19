@@ -1,6 +1,7 @@
 package oauth2gorm
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -67,13 +68,13 @@ func (s *ClientStore) toClientInfo(data []byte) (oauth2.ClientInfo, error) {
 	return &cm, err
 }
 
-func (s *ClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
+func (s *ClientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
 	if id == "" {
 		return nil, nil
 	}
 
 	var item ClientStoreItem
-	err := s.db.Table(s.tableName).First(&item, id).Error
+	err := s.db.WithContext(ctx).Table(s.tableName).First(&item, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (s *ClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	return s.toClientInfo([]byte(item.Data))
 }
 
-func (s *ClientStore) Create(info oauth2.ClientInfo) error {
+func (s *ClientStore) Create(ctx context.Context, info oauth2.ClientInfo) error {
 	data, err := json.Marshal(info)
 	if err != nil {
 		return err
@@ -92,5 +93,5 @@ func (s *ClientStore) Create(info oauth2.ClientInfo) error {
 		Data:   string(data),
 	}
 
-	return s.db.Table(s.tableName).Create(item).Error
+	return s.db.WithContext(ctx).Table(s.tableName).Create(item).Error
 }

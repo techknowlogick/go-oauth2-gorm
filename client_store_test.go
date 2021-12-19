@@ -1,6 +1,7 @@
 package oauth2gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/go-oauth2/oauth2/v4/models"
@@ -20,10 +21,10 @@ func TestClientStore(t *testing.T) {
 				UserID: "1_1",
 			}
 
-			err := cstore.Create(info)
+			err := cstore.Create(context.Background(), info)
 			So(err, ShouldBeNil)
 
-			cinfo, err := cstore.GetByID("1")
+			cinfo, err := cstore.GetByID(context.Background(), "1")
 			So(err, ShouldBeNil)
 			So(cinfo.GetUserID(), ShouldEqual, info.UserID)
 		})
