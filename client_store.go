@@ -13,11 +13,13 @@ import (
 )
 
 type ClientStoreItem struct {
-	gorm.Model
-
-	Secret string `gorm:"type:varchar(512)"`
-	Domain string `gorm:"type:varchar(512)"`
-	Data   string `gorm:"type:text"`
+	ID        string
+	Secret    string `gorm:"type:varchar(512)"`
+	Domain    string `gorm:"type:varchar(512)"`
+	Data      string `gorm:"type:text"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 func NewClientStore(config *Config) *ClientStore {
@@ -74,7 +76,7 @@ func (s *ClientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo
 	}
 
 	var item ClientStoreItem
-	err := s.db.WithContext(ctx).Table(s.tableName).First(&item, id).Error
+	err := s.db.WithContext(ctx).Table(s.tableName).Limit(1).Find(&item, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +90,7 @@ func (s *ClientStore) Create(ctx context.Context, info oauth2.ClientInfo) error 
 		return err
 	}
 	item := &ClientStoreItem{
+		ID:     info.GetID(),
 		Secret: info.GetSecret(),
 		Domain: info.GetDomain(),
 		Data:   string(data),
