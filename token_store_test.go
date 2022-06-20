@@ -72,6 +72,34 @@ func TestTokenStore(t *testing.T) {
 			So(ainfo, ShouldBeNil)
 		})
 
+		Convey("Test access token(no expiration time) store", func() {
+			info := &models.Token{
+				ClientID:        "1",
+				UserID:          "1_1",
+				RedirectURI:     "http://localhost/",
+				Scope:           "all",
+				Access:          "1_1_2",
+				AccessCreateAt:  time.Now(),
+				AccessExpiresIn: 0,
+			}
+			err := store.Create(context.Background(), info)
+			So(err, ShouldBeNil)
+
+			// wait gc
+			time.Sleep(time.Second)
+
+			ainfo, err := store.GetByAccess(context.Background(), info.GetAccess())
+			So(err, ShouldBeNil)
+			So(ainfo.GetUserID(), ShouldEqual, info.GetUserID())
+
+			err = store.RemoveByAccess(context.Background(), info.GetAccess())
+			So(err, ShouldBeNil)
+
+			ainfo, err = store.GetByAccess(context.Background(), info.GetAccess())
+			So(err, ShouldBeNil)
+			So(ainfo, ShouldBeNil)
+		})
+
 		Convey("Test refresh token store", func() {
 			info := &models.Token{
 				ClientID:         "1",
