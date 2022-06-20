@@ -97,13 +97,14 @@ func (s *TokenStore) gc() {
 	for range s.ticker.C {
 		now := time.Now().Unix()
 		var count int64
-		if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Count(&count).Error; err != nil {
+		db := s.db.Table(s.tableName).Where("expired_at != 0 AND expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "")
+		if err := db.Count(&count).Error; err != nil {
 			s.errorf("[ERROR]:%s\n", err)
 			return
 		}
 		if count > 0 {
 			// not soft delete.
-			if err := s.db.Table(s.tableName).Where("expired_at <= ?", now).Or("code = ? and access = ? AND refresh = ?", "", "", "").Unscoped().Delete(&TokenStoreItem{}).Error; err != nil {
+			if err := db.Unscoped().Delete(&TokenStoreItem{}).Error; err != nil {
 				s.errorf("[ERROR]:%s\n", err)
 			}
 		}
@@ -125,11 +126,21 @@ func (s *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 		item.ExpiredAt = info.GetCodeCreateAt().Add(info.GetCodeExpiresIn()).Unix()
 	} else {
 		item.Access = info.GetAccess()
-		item.ExpiredAt = info.GetAccessCreateAt().Add(info.GetAccessExpiresIn()).Unix()
+		if accessExpiresIn := info.GetAccessExpiresIn(); accessExpiresIn != 0 {
+			item.ExpiredAt = info.GetAccessCreateAt().Add(accessExpiresIn).Unix()
+		}
 
 		if refresh := info.GetRefresh(); refresh != "" {
-			item.Refresh = info.GetRefresh()
-			item.ExpiredAt = info.GetRefreshCreateAt().Add(info.GetRefreshExpiresIn()).Unix()
+			item.Refresh = refresh
+			refreshExpiresIn := info.GetRefreshExpiresIn()
+			refreshExpiredAt := info.GetRefreshCreateAt().Add(refreshExpiresIn).Unix()
+			if item.ExpiredAt != 0 {
+				if refreshExpiresIn == 0 {
+					item.ExpiredAt = 0
+				} else if refreshExpiredAt > item.ExpiredAt {
+					item.ExpiredAt = refreshExpiredAt
+				}
+			}
 		}
 	}
 
