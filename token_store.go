@@ -16,11 +16,15 @@ import (
 type TokenStoreItem struct {
 	gorm.Model
 
-	ExpiredAt int64
-	Code      string `gorm:"type:varchar(512)"`
-	Access    string `gorm:"type:varchar(512)"`
-	Refresh   string `gorm:"type:varchar(512)"`
-	Data      string `gorm:"type:text"`
+	ExpiredAt   int64
+	Code        string `gorm:"type:varchar(512)"`
+	Access      string `gorm:"type:varchar(512)"`
+	Refresh     string `gorm:"type:varchar(512)"`
+	ClientID    string `gorm:"type:varchar(512)"`
+	UserID      string `gorm:"type:varchar(512)"`
+	Scope       string `gorm:"type:varchar(512)"`
+	RedirectURI string `gorm:"type:varchar(512)"`
+	Data        string `gorm:"type:text"`
 }
 
 // NewStore create mysql store instance,
