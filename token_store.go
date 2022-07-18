@@ -121,7 +121,11 @@ func (s *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 		return err
 	}
 	item := &TokenStoreItem{
-		Data: string(jv),
+		ClientID:    info.GetClientID(),
+		UserID:      info.GetUserID(),
+		Scope:       info.GetScope(),
+		RedirectURI: info.GetRedirectURI(),
+		Data:        string(jv),
 	}
 
 	if code := info.GetCode(); code != "" {
